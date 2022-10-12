@@ -1,8 +1,5 @@
 package com.coroutine.coroutineplayground.features.search.inject
 
-import com.coroutine.coroutineplayground.features.common.SearchApi
-import com.coroutine.coroutineplayground.features.search.remote.SearchRemoteDataSource
-import com.coroutine.coroutineplayground.features.search.remote.SearchRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,19 +11,6 @@ import javax.inject.Qualifier
 @Module
 @InstallIn(ViewModelComponent::class)
 class SearchModule {
-    @Provides
-    fun provideSearchRemoteDataSource(
-        searchApi: SearchApi
-    ): SearchRemoteDataSource =
-        SearchRemoteDataSource(searchApi)
-
-    @Provides
-    fun provideSearchRepository(
-        searchRemoteDataSource: SearchRemoteDataSource,
-        @CoroutineDispatcherIO dispatcher: CoroutineDispatcher
-    ): SearchRepository =
-        SearchRepository(searchRemoteDataSource, dispatcher)
-
     @CoroutineDispatcherIO
     @Provides
     fun provideDispatcherIO(): CoroutineDispatcher = Dispatchers.IO

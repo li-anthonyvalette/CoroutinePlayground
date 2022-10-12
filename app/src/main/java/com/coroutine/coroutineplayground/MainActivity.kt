@@ -4,21 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.coroutine.coroutineplayground.features.search.model.SearchModel
+import com.coroutine.coroutineplayground.features.search.viewmodel.SearchState
 import com.coroutine.coroutineplayground.features.search.viewmodel.SearchViewModel
 import com.coroutine.coroutineplayground.ui.theme.CoroutinePlaygroundTheme
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.compose.runtime.getValue
-
-import androidx.compose.runtime.livedata.observeAsState
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -35,13 +34,32 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val searchModel by searchViewModel.fetchListings().collectAsState(initial = SearchModel(emptyList()))
+                    val searchState =
+                        searchViewModel.searchStateLiveData.observeAsState(SearchState.Loading)
 
-                    val city = if (searchModel.items.isNotEmpty()) searchModel.items[0].city else "toto"
-                    Greeting("Android $city")
+                    when (searchState.value) {
+                        is SearchState.Success -> {
+                            Greeting("Android success")
+                        }
+                        SearchState.Loading -> {
+                            Greeting("Android loading")
+                        }
+                        SearchState.Error -> {
+                            Column {
+                                Greeting("Android error")
+                                Button(onClick = { retry() }) {
+                                    Text(text = "Retry")
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private fun retry() {
+        searchViewModel.fetchListings()
     }
 }
 
