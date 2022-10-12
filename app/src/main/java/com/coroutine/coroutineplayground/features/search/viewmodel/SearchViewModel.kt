@@ -7,52 +7,61 @@ import androidx.lifecycle.viewModelScope
 import com.coroutine.coroutineplayground.features.search.model.SearchModel
 import com.coroutine.coroutineplayground.features.search.repository.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val searchRepository: SearchRepository
 ) : ViewModel() {
 
-    private val mutableSearchStateLiveData: MutableLiveData<SearchState> =
-        MutableLiveData(SearchState.Loading)
-    val searchStateLiveData: LiveData<SearchState> = mutableSearchStateLiveData
+    private val mutableSearchStateLiveData: MutableLiveData<SearchScreen> =
+        MutableLiveData(SearchScreen.Loading)
+    val searchStateLiveData: LiveData<SearchScreen> = mutableSearchStateLiveData
 
     private var job: Job? = null
+
+    private val mutableStateFlow = MutableStateFlow(false)
+    private val stateFlow = mutableStateFlow.flatMapLatest {
+        getSearchScreenFlow()
+    }.onStart {
+        emit(SearchScreen.Loading)
+    }.catch {
+        emit(SearchScreen.Error)
+    }
 
     init {
         fetchListings()
     }
 
+
     fun fetchListings() {
         job?.cancel()
 
         job = viewModelScope.launch {
-            getStateFlow().onStart {
-                emit(SearchState.Loading)
+            getSearchScreenFlow().onStart {
+                emit(SearchScreen.Loading)
             }.catch {
-                emit(SearchState.Error)
+                emit(SearchScreen.Error)
             }.collect {
                 mutableSearchStateLiveData.value = it
             }
         }
     }
 
-    private fun getStateFlow(): Flow<SearchState> {
+    private fun getSearchScreenFlow(): Flow<SearchScreen> {
         return searchRepository.getListings().map {
-            SearchState.Success(it)
+            SearchScreen.Success(it)
         }
     }
 }
 
-sealed class SearchState {
-    data class Success(val searchModel: SearchModel) : SearchState()
-    object Loading : SearchState()
-    object Error : SearchState()
+sealed class SearchScreen {
+    data class Success(val searchModel: SearchModel) : SearchScreen()
+    object Loading : SearchScreen()
+    object Error : SearchScreen()
 }

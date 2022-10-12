@@ -17,7 +17,8 @@ class SearchModelTransformer @Inject constructor() {
                     listing.city,
                     listing.area,
                     listing.price,
-                    listing.rooms ?: 0
+                    listing.rooms ?: 0,
+                    listing.url ?: ""
                 )
             }
         )

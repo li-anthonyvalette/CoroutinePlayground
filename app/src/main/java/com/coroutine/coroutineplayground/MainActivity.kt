@@ -6,17 +6,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.coroutine.coroutineplayground.features.search.viewmodel.SearchState
+import com.coroutine.coroutineplayground.features.search.model.ListingItem
+import com.coroutine.coroutineplayground.features.search.model.SearchModel
+import com.coroutine.coroutineplayground.features.search.viewmodel.SearchScreen
 import com.coroutine.coroutineplayground.features.search.viewmodel.SearchViewModel
 import com.coroutine.coroutineplayground.ui.theme.CoroutinePlaygroundTheme
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshState
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -35,16 +38,18 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val searchState =
-                        searchViewModel.searchStateLiveData.observeAsState(SearchState.Loading)
+                        searchViewModel.searchStateLiveData.observeAsState(SearchScreen.Loading)
 
                     when (searchState.value) {
-                        is SearchState.Success -> {
-                            Greeting("Android success")
+                        is SearchScreen.Success -> {
+                            DisplayResults(
+                                (searchState.value as SearchScreen.Success).searchModel
+                            ) { searchViewModel.fetchListings() }
                         }
-                        SearchState.Loading -> {
+                        SearchScreen.Loading -> {
                             Greeting("Android loading")
                         }
-                        SearchState.Error -> {
+                        SearchScreen.Error -> {
                             Column {
                                 Greeting("Android error")
                                 Button(onClick = { retry() }) {
@@ -60,6 +65,28 @@ class MainActivity : ComponentActivity() {
 
     private fun retry() {
         searchViewModel.fetchListings()
+    }
+}
+
+@Composable
+fun DisplayResults(searchModel: SearchModel, onRefresh: () -> Unit) {
+    SwipeRefresh(
+        state = SwipeRefreshState(false),
+        onRefresh = { onRefresh.invoke() },
+    ) {
+        LazyColumn {
+            items(searchModel.items) { listingItem ->
+                DisplayListingItem(listingItem)
+            }
+        }
+    }
+}
+
+@Composable
+fun DisplayListingItem(listingItem: ListingItem) {
+    Card {
+        Text(text = listingItem.city, style = MaterialTheme.typography.titleLarge)
+        Text(text = "${listingItem.price} €", style = MaterialTheme.typography.titleSmall)
     }
 }
 
