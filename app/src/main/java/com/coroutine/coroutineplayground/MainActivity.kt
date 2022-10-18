@@ -16,14 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.coroutine.coroutineplayground.features.search.model.ListingItem
 import com.coroutine.coroutineplayground.features.search.model.SearchModel
-import com.coroutine.coroutineplayground.features.search.viewmodel.SearchScreen
+import com.coroutine.coroutineplayground.features.search.viewmodel.SearchScreenState
 import com.coroutine.coroutineplayground.features.search.viewmodel.SearchViewModel
 import com.coroutine.coroutineplayground.ui.theme.CoroutinePlaygroundTheme
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -70,22 +69,22 @@ fun Search(padding: PaddingValues, searchViewModel: SearchViewModel) {
         color = MaterialTheme.colorScheme.background
     ) {
         val searchState =
-            searchViewModel.searchStateLiveData.observeAsState(SearchScreen.Loading)
+            searchViewModel.searchStateLiveData.observeAsState(SearchScreenState.Loading)
 
         SwipeRefresh(
-            state = SwipeRefreshState(searchState.value == SearchScreen.Loading),
+            state = SwipeRefreshState(searchState.value == SearchScreenState.Loading),
             onRefresh = { searchViewModel.fetchListings() },
         ) {
             when (searchState.value) {
-                is SearchScreen.Success -> {
+                is SearchScreenState.Success -> {
                     DisplayResults(
-                        (searchState.value as SearchScreen.Success).searchModel
+                        (searchState.value as SearchScreenState.Success).searchModel
                     )
                 }
-                SearchScreen.Loading -> {
+                SearchScreenState.Loading -> {
                     Text("Loading")
                 }
-                SearchScreen.Error -> {
+                SearchScreenState.Error -> {
                     Column {
                         Text("Error")
                         Button(onClick = { searchViewModel.fetchListings() }) {
