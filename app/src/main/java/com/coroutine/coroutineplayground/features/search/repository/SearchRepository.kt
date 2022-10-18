@@ -1,7 +1,7 @@
 package com.coroutine.coroutineplayground.features.search.repository
 
 import com.coroutine.coroutineplayground.features.common.model.Listing
-import com.coroutine.coroutineplayground.features.search.inject.CoroutineDispatcherIO
+import com.coroutine.coroutineplayground.features.search.inject.CoroutineDispatcherDefault
 import com.coroutine.coroutineplayground.features.search.model.SearchModel
 import com.coroutine.coroutineplayground.features.search.remote.SearchRemoteDataSource
 import kotlinx.coroutines.CoroutineDispatcher
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 class SearchRepository @Inject constructor(
     private val searchRemoteDataSource: SearchRemoteDataSource,
-    @CoroutineDispatcherIO private val dispatcher: CoroutineDispatcher,
+    @CoroutineDispatcherDefault private val dispatcher: CoroutineDispatcher,
     private val searchModelTransformer: SearchModelTransformer
 ) {
     fun getListings(): Flow<SearchModel> {
