@@ -40,20 +40,25 @@ class MainActivity : ComponentActivity() {
                     val searchState =
                         searchViewModel.searchStateLiveData.observeAsState(SearchScreen.Loading)
 
-                    when (searchState.value) {
-                        is SearchScreen.Success -> {
-                            DisplayResults(
-                                (searchState.value as SearchScreen.Success).searchModel
-                            ) { searchViewModel.fetchListings() }
-                        }
-                        SearchScreen.Loading -> {
-                            Greeting("Android loading")
-                        }
-                        SearchScreen.Error -> {
-                            Column {
-                                Greeting("Android error")
-                                Button(onClick = { retry() }) {
-                                    Text(text = "Retry")
+                    SwipeRefresh(
+                        state = SwipeRefreshState(searchState.value == SearchScreen.Loading),
+                        onRefresh = { searchViewModel.fetchListings() },
+                    ) {
+                        when (searchState.value) {
+                            is SearchScreen.Success -> {
+                                DisplayResults(
+                                    (searchState.value as SearchScreen.Success).searchModel
+                                )
+                            }
+                            SearchScreen.Loading -> {
+                                Greeting("Android loading")
+                            }
+                            SearchScreen.Error -> {
+                                Column {
+                                    Greeting("Android error")
+                                    Button(onClick = { searchViewModel.fetchListings() }) {
+                                        Text(text = "Retry")
+                                    }
                                 }
                             }
                         }
@@ -62,22 +67,13 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    private fun retry() {
-        searchViewModel.fetchListings()
-    }
 }
 
 @Composable
-fun DisplayResults(searchModel: SearchModel, onRefresh: () -> Unit) {
-    SwipeRefresh(
-        state = SwipeRefreshState(false),
-        onRefresh = { onRefresh.invoke() },
-    ) {
-        LazyColumn {
-            items(searchModel.items) { listingItem ->
-                DisplayListingItem(listingItem)
-            }
+fun DisplayResults(searchModel: SearchModel) {
+    LazyColumn {
+        items(searchModel.items) { listingItem ->
+            DisplayListingItem(listingItem)
         }
     }
 }

@@ -7,13 +7,12 @@ import androidx.lifecycle.viewModelScope
 import com.coroutine.coroutineplayground.features.search.model.SearchModel
 import com.coroutine.coroutineplayground.features.search.repository.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val searchRepository: SearchRepository
@@ -23,34 +22,32 @@ class SearchViewModel @Inject constructor(
         MutableLiveData(SearchScreen.Loading)
     val searchStateLiveData: LiveData<SearchScreen> = mutableSearchStateLiveData
 
-    private var job: Job? = null
+    private val mutableShareFlow =
+        MutableSharedFlow<Boolean>(1, onBufferOverflow = BufferOverflow.DROP_LATEST).apply {
+            tryEmit(true)
+        }
 
-    private val mutableStateFlow = MutableStateFlow(false)
-    private val stateFlow = mutableStateFlow.flatMapLatest {
+    @OptIn(FlowPreview::class)
+    private val shareFlow = mutableShareFlow.flatMapMerge {
         getSearchScreenFlow()
-    }.onStart {
-        emit(SearchScreen.Loading)
-    }.catch {
-        emit(SearchScreen.Error)
+            .onStart {
+                emit(SearchScreen.Loading)
+            }
+            .catch {
+                emit(SearchScreen.Error)
+            }
     }
 
     init {
-        fetchListings()
-    }
-
-
-    fun fetchListings() {
-        job?.cancel()
-
-        job = viewModelScope.launch {
-            getSearchScreenFlow().onStart {
-                emit(SearchScreen.Loading)
-            }.catch {
-                emit(SearchScreen.Error)
-            }.collect {
+        viewModelScope.launch {
+            shareFlow.collect {
                 mutableSearchStateLiveData.value = it
             }
         }
+    }
+
+    fun fetchListings() {
+        mutableShareFlow.tryEmit(true)
     }
 
     private fun getSearchScreenFlow(): Flow<SearchScreen> {
