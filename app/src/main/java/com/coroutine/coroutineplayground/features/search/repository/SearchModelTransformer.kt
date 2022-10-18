@@ -4,10 +4,14 @@ import androidx.annotation.WorkerThread
 import com.coroutine.coroutineplayground.features.common.model.Listing
 import com.coroutine.coroutineplayground.features.search.model.ListingItem
 import com.coroutine.coroutineplayground.features.search.model.SearchModel
+import java.text.NumberFormat
+import java.util.*
 import javax.inject.Inject
 
 
-class SearchModelTransformer @Inject constructor() {
+class SearchModelTransformer @Inject constructor(
+    private val priceFormat: NumberFormat
+) {
 
     @WorkerThread
     fun apply(listings: List<Listing>): SearchModel {
@@ -16,7 +20,7 @@ class SearchModelTransformer @Inject constructor() {
                 ListingItem(
                     listing.city,
                     listing.area,
-                    listing.price,
+                    priceFormat.format(listing.price) + " €",
                     listing.rooms ?: 0,
                     listing.url ?: ""
                 )

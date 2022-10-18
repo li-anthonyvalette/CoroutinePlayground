@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import java.text.NumberFormat
+import java.util.*
 import javax.inject.Qualifier
 
 @Module
@@ -19,6 +21,11 @@ class SearchModule {
     @Provides
     fun provideDispatcherDefault(): CoroutineDispatcher = Dispatchers.Default
 
+    @Provides
+    fun providePriceFormat(): NumberFormat {
+        val currentLocale: Locale = Locale.getDefault()
+        return NumberFormat.getInstance(currentLocale)
+    }
 }
 
 @Qualifier
