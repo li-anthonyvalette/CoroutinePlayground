@@ -7,7 +7,7 @@ data class SearchModel(
 data class ListingItem(
     val city: String,
     val area: Float,
-    val price: Float,
+    val price: String,
     val rooms: Int,
     val url: String
 )
