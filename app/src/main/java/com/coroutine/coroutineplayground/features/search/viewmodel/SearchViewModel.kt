@@ -25,9 +25,7 @@ class SearchViewModel @Inject constructor(
         get() = mutableSearchStateFlow
 
     private val mutableSharedFlow =
-        MutableSharedFlow<Boolean>(1, onBufferOverflow = BufferOverflow.DROP_LATEST).apply {
-            tryEmit(true)
-        }
+        MutableSharedFlow<Boolean>(1)
 
     init {
         viewModelScope.launch {
@@ -35,6 +33,8 @@ class SearchViewModel @Inject constructor(
                 mutableSearchStateFlow.value = it
             }
         }
+
+        mutableSharedFlow.tryEmit(true)
     }
 
     @OptIn(FlowPreview::class)
