@@ -1,7 +1,5 @@
 package com.coroutine.coroutineplayground.features.search.viewmodel
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.coroutine.coroutineplayground.features.search.inject.CoroutineDispatcherDefault
@@ -21,11 +19,12 @@ class SearchViewModel @Inject constructor(
     @CoroutineDispatcherDefault private val dispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
-    private val mutableSearchStateLiveData: MutableLiveData<SearchScreenState> =
-        MutableLiveData(SearchScreenState.Loading)
-    val searchStateLiveData: LiveData<SearchScreenState> = mutableSearchStateLiveData
+    private val mutableSearchStateFlow =
+        MutableStateFlow<SearchScreenState>(SearchScreenState.Loading)
+    val searchStateFlow: StateFlow<SearchScreenState>
+        get() = mutableSearchStateFlow
 
-    private val mutableShareFlow =
+    private val mutableSharedFlow =
         MutableSharedFlow<Boolean>(1, onBufferOverflow = BufferOverflow.DROP_LATEST).apply {
             tryEmit(true)
         }
@@ -33,13 +32,13 @@ class SearchViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             getShareFlow().collect {
-                mutableSearchStateLiveData.value = it
+                mutableSearchStateFlow.value = it
             }
         }
     }
 
     @OptIn(FlowPreview::class)
-    private fun getShareFlow(): Flow<SearchScreenState> = mutableShareFlow.flatMapMerge {
+    private fun getShareFlow(): Flow<SearchScreenState> = mutableSharedFlow.flatMapMerge {
         getSearchScreenFlow()
             .onStart {
                 emit(SearchScreenState.Loading)
@@ -56,7 +55,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun fetchListings() {
-        mutableShareFlow.tryEmit(true)
+        mutableSharedFlow.tryEmit(true)
     }
 }
 

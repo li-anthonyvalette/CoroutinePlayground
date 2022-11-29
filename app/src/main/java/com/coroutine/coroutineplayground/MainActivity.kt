@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,7 +70,7 @@ fun Search(padding: PaddingValues, searchViewModel: SearchViewModel) {
         color = MaterialTheme.colorScheme.background
     ) {
         val searchState =
-            searchViewModel.searchStateLiveData.observeAsState(SearchScreenState.Loading)
+            searchViewModel.searchStateFlow.collectAsState(SearchScreenState.Loading)
 
         SwipeRefresh(
             state = SwipeRefreshState(searchState.value == SearchScreenState.Loading),
