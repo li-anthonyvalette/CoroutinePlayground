@@ -1,6 +1,7 @@
 package com.coroutine.coroutineplayground
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -18,6 +19,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.coroutine.coroutineplayground.features.search.model.ListingItem
@@ -32,49 +36,53 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private val searchViewModel: SearchViewModel by viewModels()
-
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            CoroutinePlaygroundTheme {
-                // A surface container using the 'background' color from the theme
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = { Text(text = "Coroutine Playground") },
-                            colors = TopAppBarDefaults.smallTopAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                titleContentColor = Color.White
+            CoroutinePlaygroundTheme(
+                content = {
+                    // A surface container using the 'background' color from the theme
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                title = { Text(text = "Coroutine Playground") },
+                                colors = TopAppBarDefaults.smallTopAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    titleContentColor = Color.White
+                                )
                             )
-                        )
-                    },
-                    content = { padding ->
-                        Search(padding, searchViewModel)
-                    }
-                )
-            }
+                        },
+                        content = { padding ->
+                            Search(padding)
+                        }
+                    )
+                },
+            )
         }
     }
 }
 
+@OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
-fun Search(padding: PaddingValues, searchViewModel: SearchViewModel) {
+fun Search(
+    padding: PaddingValues,
+    searchViewModel: SearchViewModel = hiltViewModel()
+) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = padding.calculateTopPadding()),
         color = MaterialTheme.colorScheme.background
     ) {
-        val searchState =
-            searchViewModel.searchStateFlow.collectAsState(SearchScreenState.Loading)
+        val searchState = searchViewModel.searchScreenState.collectAsStateWithLifecycle()
 
         SwipeRefresh(
             state = SwipeRefreshState(searchState.value == SearchScreenState.Loading),
             onRefresh = { searchViewModel.fetchListings() },
         ) {
+            Log.d("LIFECYCLE", "View refresh")
             when (searchState.value) {
                 is SearchScreenState.Success -> {
                     DisplayResults(
@@ -151,7 +159,9 @@ fun Greeting(name: String) {
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    CoroutinePlaygroundTheme {
-        Greeting("Android")
-    }
+    CoroutinePlaygroundTheme(
+        content = {
+            Greeting("Android")
+        },
+    )
 }

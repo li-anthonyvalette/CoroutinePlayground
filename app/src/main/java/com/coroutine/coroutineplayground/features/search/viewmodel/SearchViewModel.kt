@@ -2,56 +2,35 @@ package com.coroutine.coroutineplayground.features.search.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.coroutine.coroutineplayground.features.search.inject.CoroutineDispatcherDefault
 import com.coroutine.coroutineplayground.features.search.model.SearchModel
 import com.coroutine.coroutineplayground.features.search.repository.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val searchRepository: SearchRepository,
-    @CoroutineDispatcherDefault private val dispatcher: CoroutineDispatcher
+    searchRepository: SearchRepository
 ) : ViewModel() {
 
-    private val mutableSearchStateFlow =
-        MutableStateFlow<SearchScreenState>(SearchScreenState.Loading)
-    val searchStateFlow: StateFlow<SearchScreenState>
-        get() = mutableSearchStateFlow
+    /**
+     * Tip for Android apps! You can use WhileSubscribed(5000) most of the time to keep the upstream
+     * flow active for 5 seconds more after the disappearance of the last collector.
+     * That avoids restarting the upstream flow in certain situations such as configuration changes.
+     * This tip is especially helpful when upstream flows are expensive to create and
+     * when these operators are used in ViewModels.
+     * Source: https://manuelvivo.dev/sharein-statein
+     */
+    val searchScreenState: StateFlow<SearchScreenState> = searchRepository.getListings().map {
+        SearchScreenState.Success(it)
+    }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = SearchScreenState.Loading
+        )
 
     private val mutableSharedFlow =
         MutableSharedFlow<Boolean>(1)
-
-    init {
-        viewModelScope.launch {
-            getShareFlow().collect {
-                mutableSearchStateFlow.value = it
-            }
-        }
-
-        mutableSharedFlow.tryEmit(true)
-    }
-
-    @OptIn(FlowPreview::class)
-    private fun getShareFlow(): Flow<SearchScreenState> = mutableSharedFlow.flatMapMerge {
-        getSearchScreenFlow()
-            .onStart {
-                emit(SearchScreenState.Loading)
-            }
-            .catch {
-                emit(SearchScreenState.Error)
-            }
-    }
-
-    private fun getSearchScreenFlow(): Flow<SearchScreenState> {
-        return searchRepository.getListings().map {
-            SearchScreenState.Success(it)
-        }.flowOn(dispatcher)
-    }
 
     fun fetchListings() {
         mutableSharedFlow.tryEmit(true)
