@@ -5,11 +5,13 @@ import com.coroutine.coroutineplayground.features.search.inject.CoroutineDispatc
 import com.coroutine.coroutineplayground.features.search.model.SearchModel
 import com.coroutine.coroutineplayground.features.search.remote.SearchRemoteDataSource
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 class SearchRepositoryImpl @Inject constructor(
     private val searchRemoteDataSource: SearchRemoteDataSource,
@@ -24,7 +26,10 @@ class SearchRepositoryImpl @Inject constructor(
 
     private fun getListingsFlow(): Flow<List<Listing>> {
         return flow {
-            emit(searchRemoteDataSource.getListings())
+            while (true) {
+                emit(searchRemoteDataSource.getListings())
+                delay(1.seconds)
+            }
         }
     }
 }
