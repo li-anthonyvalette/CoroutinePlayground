@@ -1,12 +1,7 @@
 package com.coroutine.coroutineplayground
 
-import com.coroutine.coroutineplayground.features.common.SearchApi
-import com.coroutine.coroutineplayground.features.common.model.Listing
-import com.coroutine.coroutineplayground.features.common.model.SearchResponse
-import com.coroutine.coroutineplayground.features.search.remote.SearchRemoteDataSource
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -24,6 +19,7 @@ class TestDispatcherUnitTest {
 
         var coroutineCount = 0
         launch { coroutineCount++ }
+
         launch { coroutineCount++ }
         advanceUntilIdle()
 
@@ -35,6 +31,22 @@ class TestDispatcherUnitTest {
         var coroutineCount = 0
         launch { coroutineCount++ }
         launch { coroutineCount++ }
+
+        assertEquals(coroutineCount, 2)
+    }
+
+    @Test
+    fun standardTestWithDelay() = runTest(StandardTestDispatcher()) {
+
+        var coroutineCount = 0
+        launch { coroutineCount++ }
+        advanceUntilIdle()
+
+        launch {
+            delay(100)
+            coroutineCount++
+        }
+        advanceTimeBy(1100)
 
         assertEquals(coroutineCount, 2)
     }
