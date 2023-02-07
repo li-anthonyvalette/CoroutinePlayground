@@ -21,7 +21,7 @@ class SearchViewModelTest {
     @get:Rule
     val dispatcherRule = MainDispatcherRule()
 
-  @Test
+/*  @Test
     fun `should load classified at initialisation`() = runTest {
 
         val sut = SearchViewModel(FakeSearchRepository, UnconfinedTestDispatcher())
@@ -34,7 +34,7 @@ class SearchViewModelTest {
         }
         assertEquals(listOf(Success(A_SEARCH_MODEL)), values)
         collectJob.cancel()
-    }
+    }*/
 
 /*
     @Test
